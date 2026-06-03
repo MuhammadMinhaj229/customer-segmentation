@@ -152,3 +152,60 @@ These insights directly tell the business what to fix — not just who will chur
 ---
 
 ## 📁 Project Structure
+customer-segmentation-churn/
+├── data/
+│   ├── telco_churn.csv               # 7,043 telecom customer records
+│   └── online_retail.xlsx            # 1M+ retail transactions for RFM
+├── notebooks/
+│   ├── 01_eda.ipynb                  # Data quality, distributions, churn analysis
+│   ├── 02_rfm_analysis.ipynb         # RFM scoring on retail data
+│   ├── 03_kmeans_clustering.ipynb    # K-Means, Elbow, Silhouette, segment naming
+│   └── 04_churn_model.ipynb          # XGBoost, SMOTE, SHAP explainability
+├── app/
+│   └── streamlit_app.py              # Live interactive dashboard
+├── models/
+│   └── churn_model.pkl               # Saved production model
+├── requirements.txt                  # All dependencies
+└── README.md
+
+---
+
+## 🚀 How to Run This Project Locally
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/MuhammadMinhaj229/customer-segmentation-churn.git
+cd customer-segmentation-churn
+
+# 2. Install dependencies
+pip install -r requirements.txt
+
+# 3. Run notebooks in order
+# Open notebooks/ folder in Jupyter or VS Code
+# Run 01 → 02 → 03 → 04 in sequence
+
+# 4. Launch the dashboard
+streamlit run app/streamlit_app.py
+```
+
+---
+
+## 📈 Key Findings Summary
+
+- **Churn rate** in the dataset: 26.5% — significantly higher than healthy industry average of 10–15%
+- **Month-to-month contracts** account for 88% of all churned customers
+- **First 12 months** are the most critical retention window — 52% of churn happens here
+- **Fiber optic customers** churn at 41.9% vs DSL at 18.9% — a major service quality signal
+- **5 customer segments** identified — Champions (18%) generate 3.4x more revenue per customer than average
+- **Model correctly identifies 81% of churners** before they actually leave
+
+---
+
+## 🔗 Live Demo
+
+👉 **[Launch Dashboard](https://customer-segmentation-minhaj.streamlit.app)**
+
+---
+
+*Built by Mohammed Minhaj Mahmood*
+*[LinkedIn](https://linkedin.com/in/muhammadminhaj229) · [GitHub](https://github.com/MuhammadMinhaj229) · Hyderabad, India*
