@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: telecom-churn-api
+    env: docker
+    dockerCommand: "uvicorn api.main:app --host 0.0.0.0 --port 8000"
+    plan: free
+    healthCheckPath: /health
+
+  - type: web
+    name: telecom-churn-dashboard
+    env: docker
+    dockerCommand: "streamlit run app/streamlit_app.py --server.port=8501 --server.address=0.0.0.0"
+    plan: free
+    envVars:
+      - key: API_URL
+        fromService:
+          type: web
+          name: telecom-churn-api
+          envVarKey: RENDER_EXTERNAL_URL
