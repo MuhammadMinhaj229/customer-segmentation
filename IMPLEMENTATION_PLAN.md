@@ -173,3 +173,18 @@ customer-segmentation-churn/
 1. Does the business require real-time prediction or is batch scoring sufficient?
 2. Which specific CRM platforms require integration?
 3. What is the preferred cloud provider (AWS/GCP/Azure)?
+
+## 10. Automated Deployment Instructions (Render.com)
+
+The system is now fully containerized and configured with a `render.yaml` Blueprint file, enabling one-click deployment for both the FastAPI backend and Streamlit dashboard.
+
+### Steps to Deploy on Render:
+1. Ensure all code is pushed to your main branch on GitHub.
+2. Log into your Render.com dashboard (`minhajmuhammad229@gmail.com`).
+3. Click on the **Blueprints** tab from the top navigation bar.
+4. Click **New Blueprint Instance**.
+5. Connect your GitHub repository (`customer-segmentation`).
+6. Render will automatically detect the `render.yaml` file.
+7. Confirm the creation of the two services: `telecom-churn-api` and `telecom-churn-dashboard`.
+8. Render will provision, build the Docker images, and map the `API_URL` environment variable automatically.
+9. Wait approximately 5 minutes for the build process to finish. The Streamlit dashboard will be live and fully functional.
