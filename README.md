@@ -209,3 +209,12 @@ streamlit run app/streamlit_app.py
 
 *Built by Mohammed Minhaj Mahmood*
 *[LinkedIn](https://linkedin.com/in/muhammadminhaj229) · [GitHub](https://github.com/MuhammadMinhaj229) · Hyderabad, India*
+
+---
+
+## 🌐 Live Application Deployment (Render)
+
+This project has been fully containerized and deployed as an industry-grade distributed system on Render.com.
+
+- **Frontend Dashboard (Streamlit):** [https://churn-prediction-ui.onrender.com](https://churn-prediction-ui.onrender.com)
+- **Backend API (FastAPI):** [https://churn-prediction-api-tnqp.onrender.com/docs](https://churn-prediction-api-tnqp.onrender.com/docs)
