@@ -62,8 +62,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Determine API URL
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+import joblib
+import pandas as pd
+
+# Load model locally
+@st.cache_resource
+def load_model():
+    model_path = os.path.join(os.path.dirname(__file__), "../models/churn_model.pkl")
+    return joblib.load(model_path)
 
 # ==========================================
 # Header Section
@@ -200,92 +206,118 @@ with tab1:
 
         with st.spinner("Executing ML Inference Pipeline..."):
             try:
-                response = requests.post(f"{API_URL}/predict", json=payload)
+                model_artifacts = load_model()
+                df = pd.DataFrame([payload])
 
-                if response.status_code == 200:
-                    result = response.json()
-                    prob = result["churn_probability"] * 100
-                    pred = result["prediction"]
+                # Apply feature engineering identical to training
+                binary_cols = ["gender", "Partner", "Dependents", "PhoneService", "PaperlessBilling"]
+                for col in binary_cols:
+                    if col in df.columns:
+                        df[col] = df[col].map({"Yes": 1, "No": 0, "Male": 1, "Female": 0})
 
-                    st.markdown("### Inference Results")
+                multi_cols = [
+                    "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup",
+                    "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies",
+                    "Contract", "PaymentMethod"
+                ]
 
-                    # Create aesthetic columns for results
-                    res_col1, res_col2 = st.columns([1, 1])
-
-                    with res_col1:
-                        if pred == "Churn":
-                            st.markdown(
-                                """
-                            <div style='background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 2rem; text-align: center;'>
-                                <h2 style='color: #b91c1c; margin:0;'>⚠️ HIGH RISK</h2>
-                                <p style='color: #7f1d1d; margin-top: 0.5rem;'>This customer is highly likely to cancel their subscription.</p>
-                            </div>
-                            """,
-                                unsafe_allow_html=True,
-                            )
-
-                            st.warning(
-                                "🎯 **Recommended Action:** Route to Retention Team immediately. Offer a 10% discount on a 1-year contract upgrade."
-                            )
+                label_encoders = model_artifacts["label_encoders"]
+                for col in multi_cols:
+                    if col in df.columns and col in label_encoders:
+                        le = label_encoders[col]
+                        val = str(df[col].iloc[0])
+                        if val not in le.classes_:
+                            df[col] = le.transform([le.classes_[0]])
                         else:
-                            st.markdown(
-                                """
-                            <div style='background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 2rem; text-align: center;'>
-                                <h2 style='color: #047857; margin:0;'>✅ LOW RISK (Retain)</h2>
-                                <p style='color: #065f46; margin-top: 0.5rem;'>This customer is stable and likely to remain subscribed.</p>
-                            </div>
-                            """,
-                                unsafe_allow_html=True,
-                            )
+                            df[col] = le.transform([val])
 
-                            st.success(
-                                "🎯 **Recommended Action:** Continue standard engagement. Eligible for cross-sell campaigns."
-                            )
+                # Ensure correct feature order
+                expected_features = model_artifacts["features"]
+                for f in expected_features:
+                    if f not in df.columns:
+                        df[f] = 0
 
-                    with res_col2:
-                        # Gauge Chart for Probability
-                        fig = go.Figure(
-                            go.Indicator(
-                                mode="gauge+number",
-                                value=prob,
-                                title={"text": "Churn Probability %"},
-                                gauge={
-                                    "axis": {
-                                        "range": [None, 100],
-                                        "tickwidth": 1,
-                                        "tickcolor": "darkblue",
-                                    },
-                                    "bar": {
-                                        "color": "#ef4444" if prob > 50 else "#10b981"
-                                    },
-                                    "bgcolor": "white",
-                                    "borderwidth": 2,
-                                    "bordercolor": "gray",
-                                    "steps": [
-                                        {"range": [0, 50], "color": "#d1fae5"},
-                                        {"range": [50, 100], "color": "#fee2e2"},
-                                    ],
-                                    "threshold": {
-                                        "line": {"color": "red", "width": 4},
-                                        "thickness": 0.75,
-                                        "value": 50,
-                                    },
+                df = df[expected_features]
+
+                # Predict
+                model = model_artifacts["model"]
+                prob_val = float(model.predict_proba(df)[0][1])
+                prob = prob_val * 100
+                pred = "Churn" if prob_val > 0.5 else "Retain"
+
+                st.markdown("### Inference Results")
+
+                # Create aesthetic columns for results
+                res_col1, res_col2 = st.columns([1, 1])
+
+                with res_col1:
+                    if pred == "Churn":
+                        st.markdown(
+                            """
+                        <div style='background-color: #fee2e2; border: 1px solid #ef4444; border-radius: 8px; padding: 2rem; text-align: center;'>
+                            <h2 style='color: #b91c1c; margin:0;'>⚠️ HIGH RISK</h2>
+                            <p style='color: #7f1d1d; margin-top: 0.5rem;'>This customer is highly likely to cancel their subscription.</p>
+                        </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
+
+                        st.warning(
+                            "🎯 **Recommended Action:** Route to Retention Team immediately. Offer a 10% discount on a 1-year contract upgrade."
+                        )
+                    else:
+                        st.markdown(
+                            """
+                        <div style='background-color: #d1fae5; border: 1px solid #10b981; border-radius: 8px; padding: 2rem; text-align: center;'>
+                            <h2 style='color: #047857; margin:0;'>✅ LOW RISK (Retain)</h2>
+                            <p style='color: #065f46; margin-top: 0.5rem;'>This customer is stable and likely to remain subscribed.</p>
+                        </div>
+                        """,
+                            unsafe_allow_html=True,
+                        )
+
+                        st.success(
+                            "🎯 **Recommended Action:** Continue standard engagement. Eligible for cross-sell campaigns."
+                        )
+
+                with res_col2:
+                    # Gauge Chart for Probability
+                    fig = go.Figure(
+                        go.Indicator(
+                            mode="gauge+number",
+                            value=prob,
+                            title={"text": "Churn Probability %"},
+                            gauge={
+                                "axis": {
+                                    "range": [None, 100],
+                                    "tickwidth": 1,
+                                    "tickcolor": "darkblue",
                                 },
-                            )
+                                "bar": {
+                                    "color": "#ef4444" if prob > 50 else "#10b981"
+                                },
+                                "bgcolor": "white",
+                                "borderwidth": 2,
+                                "bordercolor": "gray",
+                                "steps": [
+                                    {"range": [0, 50], "color": "#d1fae5"},
+                                    {"range": [50, 100], "color": "#fee2e2"},
+                                ],
+                                "threshold": {
+                                    "line": {"color": "red", "width": 4},
+                                    "thickness": 0.75,
+                                    "value": 50,
+                                },
+                            },
                         )
-                        fig.update_layout(
-                            height=250, margin=dict(l=10, r=10, t=40, b=10)
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-
-                else:
-                    st.error(
-                        f"API Error (Status {response.status_code}): {response.text}"
                     )
-            except requests.exceptions.ConnectionError:
-                st.error(
-                    f"Could not connect to the Prediction API at {API_URL}. Please ensure the backend is running."
-                )
+                    fig.update_layout(
+                        height=250, margin=dict(l=10, r=10, t=40, b=10)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+            except Exception as e:
+                st.error(f"❌ Inference error: {e}")
 
 with tab2:
     st.markdown("### Portfolio Analytics & Insights")
