@@ -203,7 +203,7 @@ streamlit run app/streamlit_app.py
 
 ## 🔗 Live Demo
 
-👉 **[Launch Dashboard](https://customer-segmentation-minhaj.streamlit.app)**
+👉 **[Launch Dashboard][(https://customer-segmentation-minhaj.streamlit.app](https://customer-segmentation-efb7gqwwg2sqdzpymxxbz5.streamlit.app/)]**
 
 ---
 
