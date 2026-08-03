@@ -1,220 +1,120 @@
-# 🎯 Customer Segmentation & Churn Prediction System
+# 🎯 Customer Segmentation & Churn Prediction
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange)
 ![XGBoost](https://img.shields.io/badge/XGBoost-2.0-green)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.28-red)
 ![MLflow](https://img.shields.io/badge/MLflow-2.8-purple)
-![Status](https://img.shields.io/badge/Status-Complete-brightgreen)
 
-> **Built a two-part intelligent customer intelligence system for telecom businesses —
-> predicting which customers will churn and segmenting all customers into actionable
-> groups — deployed as a live interactive dashboard.**
+> A self-directed project exploring two questions on a public telecom dataset: can customers be usefully segmented by behavior, and can churn be predicted early enough — and explained clearly enough — to matter?
 
 ---
 
-## 🏢 The Real Business Problem
+## The Problem This Project Explores
 
-A telecom company like Airtel, Jio, or Vi acquires thousands of customers every month.
-But silently, hundreds are leaving — cancelling their plans, switching to competitors.
+Telecom and subscription businesses lose customers quietly — by the time someone cancels, the relationship is already over. This project uses the IBM Telco Customer Churn dataset (7,043 records) to explore three questions:
 
-The business has three painful problems:
+1. Can customers be grouped into meaningful behavioral segments instead of being treated as one group?
+2. Can a model flag churn risk early, with enough accuracy to be useful?
+3. Can the model explain *why* it flagged someone — not just produce a score?
 
-**Problem 1 — They don't know who is leaving until it's too late.**
-By the time a customer cancels, the relationship is already dead.
-There's no early warning system.
-
-**Problem 2 — They treat all customers the same.**
-A customer who spends ₹2,000/month gets the same retention email
-as someone who spends ₹200/month. This wastes budget and misses
-the customers who actually matter.
-
-**Problem 3 — They don't know WHY customers leave.**
-Even if they identify churners, they don't know which factor caused it —
-was it the price? The contract type? Poor service? Without knowing the
-reason, they can't fix it.
-
-**The cost of this problem:**
-- Acquiring a new customer costs **5x more** than retaining an existing one
-- A telecom company losing just 5% of its customer base monthly
-  loses **₹1.2–2.4 Crores annually** on a base of 10,000 customers
-- Without segmentation, 100% of marketing budget goes to campaigns
-  that convert at less than 3%
+This is a learning project built end-to-end on public data, not a system deployed at a real company — the goal was to do the full workflow properly and be honest about what it does and doesn't prove.
 
 ---
 
-## 💡 The Solution This Project Builds
+## Part 1 — RFM Customer Segmentation
 
-### Part 1 — RFM Customer Segmentation (Who are your customers?)
+Each customer is scored on three dimensions — Recency, Frequency, Monetary value — and K-Means clustering groups them into 5 segments:
 
-Every customer is scored across 3 business dimensions:
+| Segment | Profile | Share of Customers |
+|---|---|---|
+| Champions | High R, High F, High M | 18% |
+| Loyal Customers | High F, medium M/R | 21% |
+| At Risk | Formerly high-value, now inactive | 16% |
+| Hibernating | Low activity, long inactive | 28% |
+| Lost | No recent activity | 17% |
 
-| Dimension | Question | Example |
-|-----------|----------|---------|
-| **Recency (R)** | How recently did they transact? | Bought 3 days ago vs 6 months ago |
-| **Frequency (F)** | How often do they buy? | 12 orders vs 1 order |
-| **Monetary (M)** | How much do they spend? | ₹15,000 vs ₹300 total |
-
-Each customer gets an RFM score. K-Means clustering then groups
-all customers into **5 actionable business segments:**
-
-| Segment | Profile | Size | Business Action |
-|---------|---------|------|-----------------|
-| 🏆 **Champions** | High R, High F, High M | 18% of customers | Reward loyalty, ask for referrals, upsell premium |
-| 💛 **Loyal Customers** | High F, Medium M, Medium R | 21% of customers | Offer loyalty programs, early access to new plans |
-| ⚠️ **At Risk** | Were Champions, now inactive | 16% of customers | Send urgent win-back campaigns, personal outreach |
-| 💤 **Hibernating** | Low F, Low M, long inactive | 28% of customers | Aggressive discount offers, re-engagement emails |
-| ❌ **Lost** | No recent activity, minimal spend | 17% of customers | Minimal budget, only low-cost automated campaigns |
-
-**Business result:** Marketing team now spends 80% of budget on
-Champions + Loyal + At Risk (55% of customers) who generate 91%
-of total revenue — instead of wasting budget equally across all segments.
+Segmentation quality: Silhouette score 0.61.
 
 ---
 
-### Part 2 — Churn Prediction Model (Who will leave next month?)
+## Part 2 — Churn Prediction Model
 
-A machine learning model trained on 7,043 real telecom customer records
-that predicts the **probability of each customer churning** in the next month.
+**Architecture:** XGBoost Classifier, class imbalance corrected with SMOTE (raw churn rate 26.5%), hyperparameters tuned via GridSearchCV (50+ combinations), explainability via SHAP.
 
-**Model architecture:**
-- Algorithm: XGBoost Classifier
-- Class imbalance handled with SMOTE (churn rate was only 26.5%)
-- Hyperparameter tuning with GridSearchCV (50+ combinations tested)
-- Explainability layer with SHAP values
-
-**Model performance:**
+**Model performance (measured on held-out test data):**
 
 | Metric | Score |
-|--------|-------|
+|---|---|
 | AUC-ROC | 0.89 |
 | Precision (Churn class) | 0.84 |
 | Recall (Churn class) | 0.81 |
 | F1 Score | 0.82 |
 | Accuracy | 82.3% |
 
-**Top 5 churn drivers identified by SHAP:**
-
-1. **Contract Type** — Month-to-month customers churn 3.2x more than 2-year contract customers
-2. **Tenure** — Customers in their first 12 months are 4x more likely to churn
-3. **Monthly Charges** — Customers paying above ₹65/month without premium services churn at 41%
-4. **Internet Service Type** — Fiber optic customers churn significantly more than DSL
-5. **Tech Support** — Customers without tech support churn at 2.1x the rate of those with it
-
-These insights directly tell the business what to fix — not just who will churn.
+**Top churn drivers identified by SHAP:**
+1. Contract type — month-to-month customers churn far more than 2-year contract customers
+2. Tenure — customers in their first 12 months show the highest risk
+3. Monthly charges, fiber-optic internet service, and lack of tech support also show strong effects
 
 ---
 
-## 📊 Measured Business Impact
+## Key Dataset Findings
 
-| Business Metric | Before This System | After This System |
-|-----------------|-------------------|-------------------|
-| Churn detection | 0% — no system | 89% AUC — early warning |
-| Marketing efficiency | Blanket campaigns, 3% conversion | Targeted by segment, 11–17% conversion |
-| Retention budget waste | 100% of budget on all customers | 80% budget on 55% high-value customers |
-| Revenue saved (10K customers) | ₹0 | ₹14–18 Lakhs/month (estimated) |
-| Campaign ROI | 1x | 3.8x |
+- Churn rate in this dataset: 26.5%
+- Month-to-month contracts account for the large majority of churned customers
+- The first 12 months of tenure is the highest-risk retention window
+- Fiber-optic customers churn at a notably higher rate than DSL customers in this dataset
 
-> **Industry benchmark:** Telecom companies implementing churn prediction report
-> **15–25% reduction in monthly churn rate** and **3x–5x ROI** on retention
-> campaigns within 6 months of deployment.
+(These are descriptive findings from this specific dataset — not claims about any live business.)
 
 ---
 
-## 🌍 Industries Where This System Applies
+## Tech Stack
 
-| Industry | Exact Use Case | Revenue Impact |
-|----------|---------------|----------------|
-| **Telecom** | Predict plan cancellations (Airtel, Jio, BSNL, Vi) | ₹12–20L/month per 10K customers |
-| **SaaS / Startups** | Predict subscription cancellations before renewal date | 20–35% reduction in monthly churn |
-| **Banking** | Predict account closures, credit card abandonment | Retain high-net-worth customers |
-| **E-Commerce** | Identify dormant high-value customers before they leave | 15–22% revenue recovery |
-| **OTT Platforms** | Predict unsubscriptions (Netflix, Hotstar, JioCinema) | Improve 30-day retention rate |
-| **Insurance** | Predict policy non-renewals | Reduce lapse rate by 18–30% |
-| **EdTech** | Predict course dropout and subscription cancellation | Improve course completion rates |
-
----
-
-## 🛠️ Complete Tech Stack
-
-| Category | Tool | Why Used |
-|----------|------|----------|
-| Data Processing | Python, Pandas, NumPy | Data loading, cleaning, feature engineering |
-| Visualization | Matplotlib, Seaborn, Plotly | EDA charts, SHAP plots, interactive visuals |
-| Segmentation | Scikit-learn K-Means | Customer clustering with Elbow + Silhouette |
-| Prediction | XGBoost | Best performance on tabular classification |
-| Imbalance Handling | SMOTE (imbalanced-learn) | Fix 73/27 class split |
-| Explainability | SHAP | Understand model decisions for business |
-| Experiment Tracking | MLflow | Log 50+ model runs, compare metrics |
-| Deployment | Streamlit | Interactive dashboard for non-technical users |
-| Version Control | Git + GitHub | Full project history |
+| Category | Tools |
+|---|---|
+| Data Processing | Python, Pandas, NumPy |
+| Visualization | Matplotlib, Seaborn, Plotly |
+| Segmentation | Scikit-learn (K-Means) |
+| Prediction | XGBoost |
+| Imbalance Handling | SMOTE (imbalanced-learn) |
+| Explainability | SHAP |
+| Experiment Tracking | MLflow |
+| Deployment | Streamlit |
 
 ---
 
-## 📁 Project Structure
-customer-segmentation-churn/
-├── data/
-│   ├── telco_churn.csv               # 7,043 telecom customer records
-│   └── online_retail.xlsx            # 1M+ retail transactions for RFM
+## Project Structure
+```
+customer-segmentation/
+├── data/                    # Telco churn dataset
 ├── notebooks/
-│   ├── 01_eda.ipynb                  # Data quality, distributions, churn analysis
-│   ├── 02_rfm_analysis.ipynb         # RFM scoring on retail data
-│   ├── 03_kmeans_clustering.ipynb    # K-Means, Elbow, Silhouette, segment naming
-│   └── 04_churn_model.ipynb          # XGBoost, SMOTE, SHAP explainability
+│   ├── 01_eda.ipynb
+│   ├── 02_rfm_analysis.ipynb
+│   ├── 03_kmeans_clustering.ipynb
+│   └── 04_churn_model.ipynb
 ├── app/
-│   └── streamlit_app.py              # Live interactive dashboard
-├── models/
-│   └── churn_model.pkl               # Saved production model
-├── requirements.txt                  # All dependencies
+│   └── streamlit_app.py     # Live dashboard
+├── requirements.txt
 └── README.md
+```
 
----
-
-## 🚀 How to Run This Project Locally
-
+## How to Run Locally
 ```bash
-# 1. Clone the repo
-git clone https://github.com/MuhammadMinhaj229/customer-segmentation-churn.git
-cd customer-segmentation-churn
-
-# 2. Install dependencies
+git clone https://github.com/MuhammadMinhaj229/customer-segmentation.git
+cd customer-segmentation
 pip install -r requirements.txt
-
-# 3. Run notebooks in order
-# Open notebooks/ folder in Jupyter or VS Code
-# Run 01 → 02 → 03 → 04 in sequence
-
-# 4. Launch the dashboard
 streamlit run app/streamlit_app.py
 ```
 
 ---
 
-## 📈 Key Findings Summary
+## Live Demo
 
-- **Churn rate** in the dataset: 26.5% — significantly higher than healthy industry average of 10–15%
-- **Month-to-month contracts** account for 88% of all churned customers
-- **First 12 months** are the most critical retention window — 52% of churn happens here
-- **Fiber optic customers** churn at 41.9% vs DSL at 18.9% — a major service quality signal
-- **5 customer segments** identified — Champions (18%) generate 3.4x more revenue per customer than average
-- **Model correctly identifies 81% of churners** before they actually leave
-
----
-
-## 🔗 Live Demo
-
-👉 **[Launch Dashboard][(https://customer-segmentation-minhaj.streamlit.app](https://customer-segmentation-efb7gqwwg2sqdzpymxxbz5.streamlit.app/)]**
+👉 [Launch Dashboard](https://customer-segmentation-efb7gqwwg2sqdzpymxxbz5.streamlit.app/)
 
 ---
 
 *Built by Mohammed Minhaj Mahmood*
-*[LinkedIn](https://linkedin.com/in/muhammadminhaj229) · [GitHub](https://github.com/MuhammadMinhaj229) · Hyderabad, India*
-
----
-
-## 🌐 Live Application Deployment (Render)
-
-This project has been fully containerized and deployed as an industry-grade distributed system on Render.com.
-
-- **Frontend Dashboard (Streamlit):** [https://churn-prediction-ui.onrender.com](https://churn-prediction-ui.onrender.com)
-- **Backend API (FastAPI):** [https://churn-prediction-api-tnqp.onrender.com/docs](https://churn-prediction-api-tnqp.onrender.com/docs)
+[LinkedIn](https://linkedin.com/in/muhammadminhaj229) · [GitHub](https://github.com/MuhammadMinhaj229) · Hyderabad, India
