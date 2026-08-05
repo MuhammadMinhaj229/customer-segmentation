@@ -1,120 +1,126 @@
-# 🎯 Customer Segmentation & Churn Prediction
+# Customer Segmentation & Churn Prediction
 
-![Python](https://img.shields.io/badge/Python-3.10-blue)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange)
-![XGBoost](https://img.shields.io/badge/XGBoost-2.0-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.28-red)
-![MLflow](https://img.shields.io/badge/MLflow-2.8-purple)
-
-> A self-directed project exploring two questions on a public telecom dataset: can customers be usefully segmented by behavior, and can churn be predicted early enough — and explained clearly enough — to matter?
+A machine learning project exploring customer behavioral segmentation and churn prediction using the IBM Telco Customer Churn dataset and an online retail dataset.
 
 ---
 
-## The Problem This Project Explores
+## Problem & Motivation
 
-Telecom and subscription businesses lose customers quietly — by the time someone cancels, the relationship is already over. This project uses the IBM Telco Customer Churn dataset (7,043 records) to explore three questions:
-
-1. Can customers be grouped into meaningful behavioral segments instead of being treated as one group?
-2. Can a model flag churn risk early, with enough accuracy to be useful?
-3. Can the model explain *why* it flagged someone — not just produce a score?
-
-This is a learning project built end-to-end on public data, not a system deployed at a real company — the goal was to do the full workflow properly and be honest about what it does and doesn't prove.
+Subscription businesses often lose customers before they can intervene. This project explores two core objectives using public datasets:
+1. Identifying distinct behavioral segments of customers using transactional data.
+2. Building a model to predict which customers are at risk of churning, allowing for proactive retention efforts.
 
 ---
 
-## Part 1 — RFM Customer Segmentation
+## Approach
 
-Each customer is scored on three dimensions — Recency, Frequency, Monetary value — and K-Means clustering groups them into 5 segments:
-
-| Segment | Profile | Share of Customers |
-|---|---|---|
-| Champions | High R, High F, High M | 18% |
-| Loyal Customers | High F, medium M/R | 21% |
-| At Risk | Formerly high-value, now inactive | 16% |
-| Hibernating | Low activity, long inactive | 28% |
-| Lost | No recent activity | 17% |
-
-Segmentation quality: Silhouette score 0.61.
+1. **Data Processing:** Categorical features were encoded and class imbalances in the churn dataset were addressed using SMOTE.
+2. **Segmentation (RFM):** Transactional data was processed to calculate Recency, Frequency, and Monetary (RFM) metrics. K-Means clustering was applied to group customers into 5 segments.
+3. **Churn Prediction:** An XGBoost classifier was trained on the processed telecom dataset to predict customer churn probability.
+4. **API & Dashboard:** The trained model is served via a FastAPI backend, and an interactive Streamlit dashboard allows for real-time customer risk profiling.
 
 ---
 
-## Part 2 — Churn Prediction Model
+## Results
 
-**Architecture:** XGBoost Classifier, class imbalance corrected with SMOTE (raw churn rate 26.5%), hyperparameters tuned via GridSearchCV (50+ combinations), explainability via SHAP.
+**RFM Segmentation**
+- **Algorithm:** K-Means (5 clusters)
+- **Silhouette Score:** 0.33 (Verified on `online_retail_II.csv`)
 
-**Model performance (measured on held-out test data):**
-
-| Metric | Score |
-|---|---|
-| AUC-ROC | 0.89 |
-| Precision (Churn class) | 0.84 |
-| Recall (Churn class) | 0.81 |
-| F1 Score | 0.82 |
-| Accuracy | 82.3% |
-
-**Top churn drivers identified by SHAP:**
-1. Contract type — month-to-month customers churn far more than 2-year contract customers
-2. Tenure — customers in their first 12 months show the highest risk
-3. Monthly charges, fiber-optic internet service, and lack of tech support also show strong effects
-
----
-
-## Key Dataset Findings
-
-- Churn rate in this dataset: 26.5%
-- Month-to-month contracts account for the large majority of churned customers
-- The first 12 months of tenure is the highest-risk retention window
-- Fiber-optic customers churn at a notably higher rate than DSL customers in this dataset
-
-(These are descriptive findings from this specific dataset — not claims about any live business.)
+**Churn Prediction Model**
+- **Algorithm:** XGBoost with SMOTE
+- **Test Set Performance:**
+  - **AUC-ROC:** 0.7977
+  - **Precision:** 0.5185
+  - **Recall:** 0.5615
+  - **F1 Score:** 0.5392
+  - **Accuracy:** 74.48%
 
 ---
 
 ## Tech Stack
 
-| Category | Tools |
-|---|---|
-| Data Processing | Python, Pandas, NumPy |
-| Visualization | Matplotlib, Seaborn, Plotly |
-| Segmentation | Scikit-learn (K-Means) |
-| Prediction | XGBoost |
-| Imbalance Handling | SMOTE (imbalanced-learn) |
-| Explainability | SHAP |
-| Experiment Tracking | MLflow |
-| Deployment | Streamlit |
+- **Data Processing:** Python, Pandas, NumPy
+- **Modeling:** Scikit-learn, XGBoost, imbalanced-learn (SMOTE)
+- **API Backend:** FastAPI, Uvicorn, Pydantic
+- **Dashboard:** Streamlit, Plotly
 
 ---
 
 ## Project Structure
 ```
 customer-segmentation/
-├── data/                    # Telco churn dataset
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   ├── 02_rfm_analysis.ipynb
-│   ├── 03_kmeans_clustering.ipynb
-│   └── 04_churn_model.ipynb
+├── api/
+│   ├── main.py              # FastAPI server and prediction endpoint
+│   └── schemas.py           # Pydantic models for API
 ├── app/
-│   └── streamlit_app.py     # Live dashboard
-├── requirements.txt
-└── README.md
+│   └── streamlit_app.py     # Streamlit frontend dashboard
+├── data/
+│   ├── online_retail_II.csv
+│   └── WA_Fn-UseC_-Telco-Customer-Churn.csv
+├── models/
+│   └── churn_model.pkl      # Saved XGBoost model and encoders
+├── notebooks/
+│   └── 01_eda.ipynb         # Initial Exploratory Data Analysis
+├── src/
+│   ├── data_loader.py       # Data loading utilities
+│   ├── feature_engineering.py # RFM calculation and feature encoding
+│   └── train.py             # Model training script
+├── tests/                   # Pytest test suite
+├── Dockerfile               # Container definition
+├── render.yaml              # Render deployment configuration
+└── requirements.txt         # Project dependencies
 ```
+
+---
 
 ## How to Run Locally
-```bash
-git clone https://github.com/MuhammadMinhaj229/customer-segmentation.git
-cd customer-segmentation
-pip install -r requirements.txt
-streamlit run app/streamlit_app.py
-```
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/MuhammadMinhaj229/customer-segmentation.git
+   cd customer-segmentation
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Start the API backend:**
+   ```bash
+   uvicorn api.main:app --host 0.0.0.0 --port 8000 &
+   ```
+
+4. **Start the Streamlit dashboard:**
+   ```bash
+   streamlit run app/streamlit_app.py --server.port=8501
+   ```
 
 ---
 
-## Live Demo
+## Limitations & Future Work
 
-👉 [Launch Dashboard](https://customer-segmentation-efb7gqwwg2sqdzpymxxbz5.streamlit.app/)
+- **Toy Datasets:** This project utilizes static, public Kaggle-style datasets (IBM Telco Churn and Online Retail). It does not reflect a live production environment with real-time data ingestion.
+- **Model Tuning:** The current model performance (e.g., F1 Score of ~0.54) indicates significant room for improvement through hyperparameter tuning and advanced feature engineering.
+- **Incomplete Artifacts:** Some originally planned components (like comprehensive Jupyter notebooks for modeling steps) are not currently present in the repository.
+- **Missing Explainability:** Model explainability tools like SHAP have not yet been implemented in the pipeline.
 
 ---
 
+## Author / Links
 *Built by Mohammed Minhaj Mahmood*
-[LinkedIn](https://linkedin.com/in/muhammadminhaj229) · [GitHub](https://github.com/MuhammadMinhaj229) · Hyderabad, India
+[LinkedIn](https://linkedin.com/in/muhammadminhaj229) · [GitHub](https://github.com/MuhammadMinhaj229)
+
+---
+
+## UNVERIFIED CLAIMS — NOT INCLUDED
+
+The following elements were present in an earlier version of this documentation but have been removed as they could not be verified in the current codebase:
+- Claims of "₹1.2–2.4 Crores annual losses", "₹14–18 Lakhs/month revenue saved", and "3.8x Campaign ROI".
+- Speculative market-sizing tables ("Industries Where This System Applies").
+- Mentions of hyperparameter tuning via GridSearchCV.
+- Mentions of model explainability via SHAP.
+- Mentions of experiment tracking via MLflow.
+- References to missing Jupyter notebooks (`02_rfm_analysis.ipynb`, `03_kmeans_clustering.ipynb`, `04_churn_model.ipynb`).
+- Previously inflated performance metrics (AUC 0.89, Silhouette score 0.61, Accuracy 82.3%, F1 0.82).
