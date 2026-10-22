@@ -1,4 +1,4 @@
-# 🎯 Customer Segmentation & Churn Prediction
+# Customer Segmentation & Churn Prediction
 
 ![Python](https://img.shields.io/badge/Python-3.10-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3-orange)
@@ -88,16 +88,16 @@ Segmentation quality: Silhouette score 0.61.
 ## Project Structure
 ```
 customer-segmentation/
-├── data/                    # Telco churn dataset
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   ├── 02_rfm_analysis.ipynb
-│   ├── 03_kmeans_clustering.ipynb
-│   └── 04_churn_model.ipynb
-├── app/
-│   └── streamlit_app.py     # Live dashboard
-├── requirements.txt
-└── README.md
+ data/                    # Telco churn dataset
+ notebooks/
+    01_eda.ipynb
+    02_rfm_analysis.ipynb
+    03_kmeans_clustering.ipynb
+    04_churn_model.ipynb
+ app/
+    streamlit_app.py     # Live dashboard
+ requirements.txt
+ README.md
 ```
 
 ## How to Run Locally
@@ -112,7 +112,7 @@ streamlit run app/streamlit_app.py
 
 ## Live Demo
 
-👉 [Launch Dashboard](https://customer-segmentation-efb7gqwwg2sqdzpymxxbz5.streamlit.app/)
+ [Launch Dashboard](https://customer-segmentation-efb7gqwwg2sqdzpymxxbz5.streamlit.app/)
 
 ---
 
